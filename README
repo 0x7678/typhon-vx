@@ -1,0 +1,15 @@
+My osmocom/GSM stuff
+
+How to run:
+  * compile armgcc toolchain by armgcc2/gnu-arm-installer/gnu-arm-installer2.sh
+  * git clone git://git.osmocom.org/osmocom-bb.git --branch sylvain/burst_ind osmocom-bb-sylvain-burst_ind/
+#  * patch osmocom source by patches/c139_baudrate.diff
+  * add armgcc to your PATH
+  * compile osmocom
+#  * use bin/load to upload phone firmware
+#  * use mysrc/sniff and mysrc/convert
+  * see doc/README for usage
+
+
+---
+# - obsolete >> check blog.0x7678.com for updated info and HOW TO

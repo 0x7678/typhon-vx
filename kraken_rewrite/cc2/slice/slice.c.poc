@@ -1,0 +1,207 @@
+ulong a51(ulong start, int steps, char retstream) {
+  /* Magic. Don't touch. */
+  // a5/1 magic constants
+  unsigned int lfsr1 = start & 0x7ffff;
+  unsigned int lfsr2 = (start>>19) & 0x3fffff;
+  unsigned int lfsr3 = (start>>41) & 0x7fffff;
+
+//  int bits = 0;
+  ulong stream = 0;
+
+  for (int i=0; i<steps; i++) {
+    /* Majority count */
+    int count = ((lfsr1>>8)&0x01);
+    count += ((lfsr2>>10)&0x01);
+    count += ((lfsr3>>10)&0x01);
+    count = count >> 1;
+
+    unsigned int bit = ((lfsr1>>18)^(lfsr2>>21)^(lfsr3>>22))&0x01;
+    stream = (stream<<1) | bit;
+    /* Clock the different lfsr */
+    if (((lfsr1>>8)&0x01)==count) {
+      unsigned int val = (lfsr1&0x52000)*0x4a000;
+      val ^= lfsr1<<(31-17);
+      lfsr1 = 2*lfsr1 | (val>>31);
+    }
+    if (((lfsr2>>10)&0x01)==count) {
+      unsigned int val = (lfsr2&0x300000)*0xc00;
+      lfsr2 = 2*lfsr2 | (val>>31);
+    }
+    if (((lfsr3>>10)&0x01)==count) {
+      unsigned int val = (lfsr3&0x500080)*0x1000a00;
+      val ^= lfsr3<<(31-21);
+      lfsr3 = 2*lfsr3 | (val>>31);
+    }
+  }
+
+  if(retstream) {
+    return stream; //return keystream
+  } else {
+    // return a5/1 internal state
+    lfsr1 = lfsr1 & 0x7ffff;
+    lfsr2 = lfsr2 & 0x3fffff;
+    lfsr3 = lfsr3 & 0x7fffff;
+
+    ulong res = (ulong)lfsr1 | ((ulong)lfsr2<<19) | ((ulong)lfsr3<<41);
+
+    return res;
+  }
+}
+
+// reverse bites in ulong XXX optimize
+ulong rev(ulong r) {
+  ulong r1 = r;
+  ulong r2 = 0;
+  for (int j = 0; j < 64 ; j++ ) {
+    r2 = (r2<<1) | (r1 & 0x01);
+    r1 = r1 >> 1;
+  }
+  return r2;
+}
+
+
+
+
+
+ulong a51slice(ulong start, int steps, char retstream) {
+
+
+uint4 reg[16];
+
+        uint clock1;
+        uint clock2;
+        uint clock3;
+    uint iclk1;
+    uint iclk2;
+    uint iclk3;
+
+        uint cr1r2;
+        uint cr1r3;
+        uint cr2r3;
+
+    uint fb1;
+    uint fb2;
+    uint fb3;
+
+int i,j;
+
+for(i=0; i<16; i++) {
+  reg[i].x = (start>>(63-4*i)) & 1;
+  reg[i].y = (start>>(62-4*i)) & 1;
+  reg[i].z = (start>>(61-4*i)) & 1;
+  reg[i].w = (start>>(60-4*i)) & 1;
+}
+
+cr1r2 = ~(reg[13].w ^ reg[8].z);
+cr1r3 = ~(reg[13].w ^ reg[3].x);
+cr2r3 = ~(reg[8].z  ^ reg[3].x);
+clock1 = cr1r2 | cr1r3;
+clock2 = cr1r2 | cr2r3;
+clock3 = cr1r3 | cr2r3;
+fb1 = (reg[11].y ^ reg[11].z ^ reg[11].w ^ reg[12].z) & clock1;
+fb2 = (reg[5].w ^ reg[6].x) & clock2;
+fb3 = (reg[0].x ^ reg[0].y ^ reg[0].z ^ reg[3].w) & clock3;
+iclk1 = ~clock1;
+iclk2 = ~clock2;
+iclk3 = ~clock3;
+
+
+for(i=0; i<5; i++) {
+  reg[i].x = (reg[i].x & iclk3) | (reg[i].y & clock3);
+  reg[i].y = (reg[i].y & iclk3) | (reg[i].z & clock3);
+  reg[i].z = (reg[i].z & iclk3) | (reg[i].w & clock3);
+  reg[i].w = (reg[i].w & iclk3) | (reg[i+1].x & clock3);
+}
+reg[5].x = (reg[5].x & iclk3) | (reg[5].y & clock3);
+reg[5].y = (reg[5].y & iclk3) | (reg[5].z & clock3);
+reg[5].z = (reg[5].z & iclk3) | fb3;
+
+reg[5].w = (reg[5].w & iclk2) | (reg[6].x & clock2);
+for(i=6; i<11; i++) {
+  reg[i].x = (reg[i].x & iclk2) | (reg[i].y & clock2);
+  reg[i].y = (reg[i].y & iclk2) | (reg[i].z & clock2);
+  reg[i].z = (reg[i].z & iclk2) | (reg[i].w & clock2);
+  reg[i].w = (reg[i].w & iclk2) | (reg[i+1].x & clock2);
+}
+reg[11].x = (reg[11].x & iclk2) | fb2;
+
+reg[11].y = (reg[11].y & iclk1) | (reg[11].z & clock1);
+reg[11].z = (reg[11].z & iclk1) | (reg[11].w & clock1);
+reg[11].w = (reg[11].w & iclk1) | (reg[12].x & clock1);
+for(i=12; i<15; i++) {
+  reg[i].x = (reg[i].x & iclk1) | (reg[i].y & clock1);
+  reg[i].y = (reg[i].y & iclk1) | (reg[i].z & clock1);
+  reg[i].z = (reg[i].z & iclk1) | (reg[i].w & clock1);
+  reg[i].w = (reg[i].w & iclk1) | (reg[i+1].x & clock1);
+}
+reg[15].x = (reg[15].x & iclk1) | (reg[15].y & clock1);
+reg[15].y = (reg[15].y & iclk1) | (reg[15].z & clock1);
+reg[15].z = (reg[15].z & iclk1) | (reg[15].w & clock1);
+reg[15].w = (reg[15].w & iclk1) | fb1;
+
+ulong ret = 0;
+
+for(i=0; i<16; i++) {
+  ret |= (ulong)reg[i].x <<(63-4*i);
+  ret |= (ulong)reg[i].y <<(62-4*i);
+  ret |= (ulong)reg[i].z <<(61-4*i);
+  ret |= (ulong)reg[i].w <<(60-4*i);
+}
+
+
+
+
+return ret;
+
+} //a51slice
+
+kernel void krak(global uint *state, uint states) {
+  
+  // kernel index
+  private size_t my = get_global_id(0); 
+
+  // pointer to memory "owned" by this kernel instance
+  private size_t myptr = my * 32;
+  // (all needed data should fit into 12 ulongs)
+
+  // reduction function table (colors)
+  private ulong rft[8];
+
+  // current_color, maximal color, challenge we are looking for.
+  private ulong c_color, s_color, challenge;
+
+  // previous state
+  private ulong prevlink;
+
+  private uint i;
+
+  union {
+    uint  a[4];
+    uint4 v;
+  } keystream;
+
+
+  // copy data 
+  if (myptr < 1) {
+    // more kernels executed than needed
+
+
+private ulong reg;
+
+
+printf("A5/1 reference implementation:\n");
+reg=0x4567b878c3ecf060ULL;
+for(i = 0; i<100; i++) {
+  printf("%i: %16llx\n",i,reg);
+  reg=a51(reg,1,0);
+}
+
+printf("A5/1 sliced: \n");
+reg=0x4567b878c3ecf060ULL;
+for(i = 0; i<100; i++) {
+  printf("%i: %16llx\n",i,reg);
+  reg=a51slice(reg,1,0);
+}
+
+  }
+}

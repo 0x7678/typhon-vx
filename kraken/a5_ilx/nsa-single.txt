@@ -1,0 +1,214 @@
+il_ps_2_0
+dcl_literal l0,0x00000000,0x00000000,0x00000000,0x00000000
+dcl_literal l1,0x00000001,0x00000001,0x00000001,0x00000001
+dcl_literal l2,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF
+dcl_literal l3,0x7FFFFFFF,0x7FFFFFFF,0x7FFFFFFF,0x7FFFFFFF
+dcl_literal l4,0x7F800000,0x7F800000,0x7F800000,0x7F800000
+dcl_literal l5,0x80000000,0x80000000,0x80000000,0x80000000
+dcl_literal l6,0x3E9A209B,0x3E9A209B,0x3E9A209B,0x3E9A209B
+dcl_literal l7,0x3F317218,0x3F317218,0x3F317218,0x3F317218
+dcl_literal l8,0x40490FDB,0x40490FDB,0x40490FDB,0x40490FDB
+dcl_literal l9,0x3FC90FDB,0x3FC90FDB,0x3FC90FDB,0x3FC90FDB
+dcl_literal l10,0x00000003,0x00000003,0x00000003,0x00000003
+dcl_literal l11,0x00000002,0x00000002,0x00000002,0x00000002
+;global (g) declared, size = 4096
+dcl_literal l12,0x00000008,0x0000000A,0x0000000A,0x00000000
+dcl_literal l13,0x00072000,0x00300000,0x00700080,0x0000ff00
+dcl_literal l14,0x00000401,0x00000801,0x00001001,0x00000000
+dcl_literal l15,0x00000019,0x00000008,0x00000007,0x000003e8
+dcl_literal l16,0x00000012,0x00000015,0x00000016,0xfff00000
+dcl_literal l17,0x0000000d,0x00000013,0x00000009,0x00000000
+
+dcl_output_usage(generic) o0.xyzw
+dcl_resource_id(0)_type(2d,unnorm)_fmtx(float)_fmty(float)_fmtz(float)_fmtw(float)
+dcl_input_position_interp(linear_noperspective) v0.xy__
+
+; Find and read our view into the global buffer
+mov r50.xy__,v0.xyzw
+ftoi r51.x,r50.x
+ishl r51.x,r51.x,l1.x
+mov r300,g[r51.x]
+mov r307,g[r51.x+1]
+mov r302,l0
+
+; If at last round - make inactive
+ige r310.x,r300.z,r300.w
+if_logicalnz r310.x
+mov r302.x,l10.x
+endif
+
+; Main loop
+; r300   - state
+; r302.x - attention
+; r305   - working state
+; r307   - keysearch
+mov r305.xy,r300.xy
+mov r306.xy,r301.xy
+
+; Loop 1000x
+mov  r98.x,l15.w
+whileloop
+if_logicalz r98.x
+break
+endif
+
+; Sample roundf & apply
+itof r310.x,r300.z
+sample_resource(0)_sampler(0) r315.xyzw,r310.xy00
+ixor r305.xy,r305.xy,r315.xy
+
+; Test for condition
+iand r310.x,r305.x,l16.w
+ior r310.x,r310.x,r302.x
+if_logicalz r310.x
+iadd r300.z,r300.z,l1.z
+ige r310.x,r300.z,r300.w
+if_logicalnz r310.x
+mov r300.xy,r305.xy
+mov r302.x,l1.x
+endif
+endif
+
+; Shift out from 2 registers -> 3 registers
+mov r100.x,r305.y
+ushr r100.y,r305.y,l17.y
+ishl r310.x,r305.x,l17.x
+ior r100.y,r100.y,r310.x
+ushr r100.z,r305.x,l17.z
+
+; Perform 163 clockings (result high&low / xy is swapped)
+call 20
+
+; Check key
+ixor r310.xy,r307.xy,r110.yx
+ixor r310.x,r310.x,r310.y
+if_logicalz r310.x
+mov r302.x,l11.x
+mov r307.z,r305.x
+mov r307.w,r305.y
+endif
+
+; Bring result into working state
+mov r305.xy,r110.yx
+
+; Copy back active states
+if_logicalz r302.x
+mov r300.xy,r305.xy
+endif
+
+; loop to top
+iadd r98.x,r98.x,l2.x
+endloop
+
+
+; Write back to global
+mov g[r51.x],r300
+mov g[r51.x+1],r307
+mov o0.xyzw,r302.xyzw
+endmain
+
+
+
+
+
+
+
+
+; Perform a complete round
+; Input r100.xyz
+; Out   r110.xy   (low,high order)
+func 20
+; Clock 100 extra
+mov  r99.x,l15.x
+whileloop
+if_logicalz r99.x
+break
+endif
+call 10
+call 10
+call 10
+call 10
+iadd r99.x,r99.x,l2.x
+endloop
+
+; Clock out 32 bits
+mov  r99.x,l15.y
+whileloop
+if_logicalz r99.x
+break
+endif
+call 11
+call 11
+call 11
+call 11
+iadd r99.x,r99.x,l2.x
+endloop
+
+mov r110.y,r110.x
+mov r210.y,r210.x
+
+; Clock out 31 bits
+mov  r99.x,l15.z
+whileloop
+if_logicalz r99.x
+break
+endif
+call 11
+call 11
+call 11
+call 11
+iadd r99.x,r99.x,l2.x
+endloop
+call 11
+call 11
+call 11
+
+; Fetch the last bit without clocking
+ushr r102.xyz,r100.xyz,l16.xyz
+and  r102.xyz,r102.xyz,l1.xyz
+ixor r102.y,r102.y,r102.z
+ixor r102.x,r102.x,r102.y
+ishl r110.x,r110.x,l1.x
+ior  r110.x,r110.x,r102.x
+ret
+
+
+
+; Clock r100 - no output
+func 10
+ushr r101.xyz,r100.xyz,l12.xyz
+and  r101.xyz,r101.xyz,l1.xyz
+u4lerp r101.w,r101.x,r101.y,r101.z
+ixor r101.w,r101.w,l1.w
+ixor r101.x,r101.x,r101.w
+ixor r101.y,r101.y,r101.w
+ixor r101.z,r101.z,r101.w
+and  r104.xyz,r100.xyz,l13.xyz
+icbits r106.xyz,r104.xyz
+iand  r106.xyz,r106.xyz,r101.xyz
+ishl r100.xyz,r100.xyz,r101.xyz
+ior  r100.xyz,r100.xyz,r106.xyz
+ret
+
+; Clock r100  - output to r110 
+func 11
+ushr r101.xyz,r100.xyz,l12.xyz
+and  r102.xyz,r101.xyz,l14.xyz
+u4lerp r102.w,r102.x,r102.y,r102.z
+ixor r102.w,r102.w,l1.w
+ixor r100.w,r102.w,r102.z
+and  r101.xyz,r101.xyz,l1.xyz
+ixor r102.x,r101.x,r102.w
+ixor r102.y,r101.y,r102.w
+ixor r102.z,r101.z,r102.w
+and  r104,r100,l13
+icbits r106,r104
+and  r106.xyz,r106.xyz,r102.xyz
+ishl r100.xyz,r100.xyz,r102.xyz
+ior  r100.xyz,r100.xyz,r106.xyz
+and  r106.w,r106.w,l1.w
+ishl r110.x,r110.x,l1.x
+ior  r110.x,r110.x,r106.w
+ret
+
+end

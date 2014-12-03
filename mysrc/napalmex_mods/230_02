@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+# niekt0@hysteria.sk, jenda@hrach.eu
+# Under GNU GPL
+
+import socket, string, re, os, sys, ConfigParser, time, Queue, thread, getopt;
+import sqlite3 as lite;
+
+config = ConfigParser.ConfigParser()
+config.read(os.getenv('HOME') + '/.omgsm/config')
+gsmpath = config.get('Main', 'GSMPATH')
+gsmsession = config.get('Main', 'GSMSESSION')
+gsmkrakenhost = config.get('Main', 'GSMKRAKENHOST')
+gsmkrakenport = config.getint('Main', 'GSMKRAKENPORT')
+kraken_job_timeout = config.getint('Main', 'GSMKRAKENJOBTIMEOUT')
+dat_maxcrack=config.getint('Main', 'GSMNAPALMEXMAXDATCRACK')
+burst_maxcrack=config.getint('Main', 'GSMNAPALMEXMAXBURSTCRACK')
+
+
+# database with statistics (optimization of plaintext guessing)
+# todo: path + per operator settings
+sqlko_stat=lite.connect(gsmpath+"stat/stats.db");
+ssql = sqlko_stat.cursor()
+
+f=os.popen(gsmpath+"/bin/gsm_convert -f %s 2>/dev/null |grep ^S"%(sys.argv[1]))
+
+tmp_lines=[]; # temporary list, we need to change order according to statistics
+for line in f.readlines():
+	tmp_lines.append(line)
+f.close()
+enc_bursts_len=len(tmp_lines)/4;
+
+#print "len: %d"%enc_bursts_len;
+
+# change order of bursts (actually whole frames, every time move 4 bursts at once)
+ssql.execute("select position from stats where length=%s order by probability desc"%enc_bursts_len);
+# XXX mode is reversed, wtf
+# order by probability desc XXX HACK saves performance;)
+# it should be there if you want to depend on sqlite undefined behaviour
+
+while True:
+	row = ssql.fetchone()
+	if row == None:
+		break
+#	print "row: %d"%row[0];
+	for i in range(0,4):
+#		print "i: %d"%i
+#		print "index: %d"%((row[0]*4)+i)
+		sys.stdout.write(tmp_lines[((row[0]-1)*4)+i])
+		tmp_lines[((row[0]-1)*4)+i]=0
+
+# if aggressive optimization is used, this is all
+# if not, ad all other  XXX todo config options
+
+# print [i for i in tmp_lines if i!=0]
+

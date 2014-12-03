@@ -1,0 +1,23 @@
+#!/bin/bash
+
+FINDKC=/home/tomash/x/kraken/Utilities/find_kc
+
+# grep ^S log |sed s/'.*:'/crack/| nc motuki.jyxo.com 6666 > cracklog
+
+grep Found cracklog  | while read line
+do
+	num=`echo "$line" |cut -f6 -d' '`
+	bits=`grep " $num " cracklog | grep Cracking |cut -f3 -d' '`
+	code=`echo "$line" | cut -f2 -d' '`
+	pos=`echo "$line" | cut -f4 -d' '`
+	fn=`grep $bits log |grep ^S | cut -f3 -d' ' | tr -d :`
+
+#	grep ^S log |grep -v $bits|head -20|while read line2
+	grep ^S log |grep -v $bits|while read line2
+	do
+		tst=`echo "$line2" | cut -f3,4 -d' ' |tr -d :`
+		$FINDKC $code $pos $fn $tst 
+	done
+
+done |grep MATCH |sort |uniq |cut -f2 -d: |cut -f1 -d\* |tr -d ' ' |tr a-z A-Z
+

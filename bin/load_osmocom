@@ -1,0 +1,7 @@
+#/bin/sh
+
+killall -9 osmocon fsogsmd
+
+(echo 0 > /sys/devices/platform/s3c2440-i2c/i2c-0/0-0073/pcf50633-gpio.0/reg-fixed-voltage.1/gta02-pm-gsm.0/power_on ; sleep 1; echo 1 > /sys/devices/platform/s3c2440-i2c/i2c-0/0-0073/pcf50633-gpio.0/reg-fixed-voltage.1/gta02-pm-gsm.0/power_on) &
+
+~/gsm/osmocom-bb-sylvain-burst_ind/src/host/osmocon/osmocon -i 13 -m romload -p /dev/ttySAC0 ~/gsm/osmocom-bb-sylvain-burst_ind/src/target/firmware/board/gta0x/layer1.highram.bin

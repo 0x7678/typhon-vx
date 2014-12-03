@@ -1,0 +1,13 @@
+diff --git a/src/shared/libosmocore/src/gsm/lapd_core.c b/src/shared/libosmocore/src/gsm/lapd_core.c
+index 54adbca..d2b1416 100644
+--- a/src/shared/libosmocore/src/gsm/lapd_core.c
++++ b/src/shared/libosmocore/src/gsm/lapd_core.c
+@@ -1560,6 +1560,8 @@ static int lapd_rx_i(struct msgb *msg, struct lapd_msg_ctx *lctx)
+ 		LOGP(DLLAPD, LOGL_INFO, "I frame ignored during own receiver "
+ 			"busy condition\n");
+ 
++	return 0;
++
+ 	/* Check for P bit */
+ 	if (lctx->p_f) {
+ 		/* 5.5.2.1 */

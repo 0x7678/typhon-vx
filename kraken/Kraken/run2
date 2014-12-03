@@ -1,0 +1,16 @@
+#!/bin/sh
+
+export DISPLAY=:0
+ps axu | grep -q " [X]" || echo Nebezej ti Xka
+
+if [ ! -f /dev/mapper/ssdcka ]; then
+	 dmsetup create ssdcka /root/gsm/test_indexes/dmsetup_table
+fi
+
+# hotfix, kraken sometimes keeps looping on last result.
+( while true; do echo crack 0010110010111100010101111011011001101101100000000001000010101111 |nc localhost 6666 2>&1 >/dev/null; sleep 10; done )&
+
+while true
+do
+	./kraken /root/gsm/test_indexes/ 6666 f0 0f
+done

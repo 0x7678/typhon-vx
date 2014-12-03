@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# --jenda
+
+while true
+do
+	./kraken /root/gsm/myidx/ 6666 
+done

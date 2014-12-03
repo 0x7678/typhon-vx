@@ -1,0 +1,99 @@
+diff --git a/src/host/layer23/src/misc/app_cell_log.c b/src/host/layer23/src/misc/app_cell_log.c
+index 27290be..e917ca6 100644
+--- a/src/host/layer23/src/misc/app_cell_log.c
++++ b/src/host/layer23/src/misc/app_cell_log.c
+@@ -41,6 +41,10 @@ extern struct log_target *stderr_target;
+ extern void *l23_ctx;
+ 
+ char *logname = "/var/log/osmocom.log";
++int scan_from = -1;
++int scan_to = -1;
++
++
+ int RACH_MAX = 2;
+ 
+ int _scan_work(struct osmocom_ms *ms)
+@@ -116,6 +120,8 @@ static int l23_cfg_print_help()
+ 	printf("  -p --port PORT	2947. gpsd port\n");
+ 	printf("  -f --gps DEVICE	/dev/ttyACM0. GPS serial device.\n");
+ 	printf("  -b --baud BAUDRAT	The baud rate of the GPS device\n");
++	printf("  -e ARFCN		Start scan at ARFCN\n");
++	printf("  -t ARFCN		Stop scan at ARFCN\n");
+ 
+ 	return 0;
+ }
+@@ -172,6 +178,12 @@ static int l23_cfg_handle(int c, const char *optarg)
+ 		g.gps_type = GPS_TYPE_SERIAL;
+ 		LOGP(DGPS, LOGL_INFO, "Setting GPS baudrate to %u\n", g.baud);
+ 		break;
++	case 'e':
++		scan_from = atoi(optarg);
++		break;
++	case 't':
++		scan_to = atoi(optarg);
++		break;
+ 	}
+ 	return 0;
+ 
+@@ -182,7 +194,7 @@ cmd_line_error:
+ 
+ static struct l23_app_info info = {
+ 	.copyright	= "Copyright (C) 2010 Andreas Eversberg\n",
+-	.getopt_string	= "g:p:l:r:nf:b:",
++	.getopt_string	= "g:p:l:r:nf:b:e:t:",
+ 	.cfg_supported	= l23_cfg_supported,
+ 	.cfg_getopt_opt = l23_getopt_options,
+ 	.cfg_handle_opt	= l23_cfg_handle,
+diff --git a/src/host/layer23/src/misc/cell_log.c b/src/host/layer23/src/misc/cell_log.c
+index aa964f4..f4b1329 100644
+--- a/src/host/layer23/src/misc/cell_log.c
++++ b/src/host/layer23/src/misc/cell_log.c
+@@ -89,6 +89,8 @@ static FILE *logfp = NULL;
+ extern char *logname;
+ extern int RACH_MAX;
+ 
++extern int scan_from;
++extern int scan_to;
+ 
+ static struct gsm48_sysinfo sysinfo;
+ 
+@@ -348,11 +350,28 @@ static void start_sync(void)
+ 
+ static void start_pm(void)
+ {
+-	uint16_t from, to;
++	uint16_t from = 0, to = 0;
+ 
+ 	state = SCAN_STATE_PM;
+-	from = band_range[pm_index][0];
+-	to = band_range[pm_index][1];
++
++	if(scan_from == -1 && scan_to == -1) { // no user range set
++		from = band_range[pm_index][0];
++		to = band_range[pm_index][1];
++	}
++	if((scan_from == -1 && scan_to != -1) || (scan_from != -1 && scan_to == -1)) {
++		// br0ken settings given
++		printf("Both or none scan_from/scan_to must be set! Aborting!\n");
++		exit(42);
++	}
++	if(scan_from > -1 && scan_to > -1) {
++		from = scan_from;
++		to = scan_to;
++		scan_from = 0; scan_to = 0;
++	}
++	if((scan_from == -2 && scan_to == -2)) { // scan already performed
++		exit(0); // XXX soo dirty /o\ :-(
++	}
++
+ 
+ 	if (from == 0 && to == 0) {
+ 		LOGP(DSUM, LOGL_INFO, "Measurement done\n");
+@@ -362,6 +381,7 @@ static void start_pm(void)
+ 				g.longitude, g.latitude);
+ 		log_pm();
+ 		start_sync();
++		scan_from = -2; scan_to = -2;
+ 		return;
+ 	}
+ 	LOGP(DSUM, LOGL_INFO, "Measure from %d to %d\n", from, to);

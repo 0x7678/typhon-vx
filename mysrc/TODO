@@ -1,0 +1,6 @@
+- multiple phones jumping on one channel
+
+- speed up kraken ;)
+
+- modify/rewrite cell_log (to scan only for x cells)
+ (in BTS scan, what about catching second "Measurement done" message to stop scan? )

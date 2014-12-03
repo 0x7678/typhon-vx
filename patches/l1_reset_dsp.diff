@@ -1,0 +1,12 @@
+diff --git a/src/target/firmware/layer1/l23_api.c b/src/target/firmware/layer1/l23_api.c
+index 24c6d3a..d93c6c3 100644
+--- a/src/target/firmware/layer1/l23_api.c
++++ b/src/target/firmware/layer1/l23_api.c
+@@ -422,6 +422,7 @@ static void l1ctl_rx_reset_req(struct msgb *msg)
+ 	switch (reset_req->type) {
+ 	case L1CTL_RES_T_FULL:
+ 		printf("L1CTL_RESET_REQ: FULL!\n");
++		dsp_power_on();
+ 		l1s_reset();
+ 		l1s_reset_hw();
+ 		audio_set_enabled(GSM48_CMODE_SIGN, 0);

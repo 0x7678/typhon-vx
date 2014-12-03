@@ -1,0 +1,12 @@
+import socket, string, re, os, sys, ConfigParser, time, Queue, thread, getopt;
+config = ConfigParser.ConfigParser()
+config.read(os.getenv('HOME') + '/.omgsm/config')
+gsmpath = config.get('Main', 'GSMPATH')
+gsmsession = config.get('Main', 'GSMSESSION')
+gsmkrakenhost = config.get('Main', 'GSMKRAKENHOST')
+gsmkrakenport = config.getint('Main', 'GSMKRAKENPORT')
+kraken_job_timeout = config.getint('Main', 'GSMKRAKENJOBTIMEOUT')
+burst_maxqueue=config.getint('Main', 'GSMNAPALMEXMAXBURSTQUEUE')
+napalmexdelay=config.getfloat('Main', 'GSMNAPALMEXDELAY')
+dat_maxadd=config.getint('Main', 'GSMNAPALMEXMAXDATADD')
+kraken_burstmaxcrack=config.getint('Main', 'GSMKRAKENMAXBURSTCRACK')

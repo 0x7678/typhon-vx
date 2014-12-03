@@ -1,0 +1,36 @@
+#!/bin/bash
+# Under GNU GPL 
+
+cfg_parser ()
+{
+    ini="$(<$1)"                               # read the file
+    ini="${ini//[/\[}"                         # escape [
+    ini="${ini//]/\]}"                         # escape ]
+    IFS=$'\n' && ini=( ${ini} )                # convert to line-array
+    ini=( ${ini[*]//;*/} )                     # remove comments with ;
+    ini=( ${ini[*]/\    =/=} )                 # remove tabs before =
+    ini=( ${ini[*]/=\   /=} )                  # remove tabs be =
+    ini=( ${ini[*]/\ =\ /=} )                  # remove anything with a space around =
+    ini=( ${ini[*]/#\\[/\}$'\n'cfg_section_} ) # set section prefix
+    ini=( ${ini[*]/%\\]/ \(} )                 # convert text2function (1)
+    ini=( ${ini[*]/=/=\( } )                   # convert item to array
+    ini=( ${ini[*]/%/ \)} )                    # close array parenthesis
+    ini=( ${ini[*]/%\\ \)/ \\} )               # the multiline trick
+    ini=( ${ini[*]/%\( \)/\(\) \{} )           # convert text2function (2)
+    ini=( ${ini[*]/%\} \)/\}} )                # remove extra parenthesis
+    ini[0]=""                                  # remove first element
+    ini[${#ini[*]} + 1]='}'                    # add the last brace
+    eval "$(echo "${ini[*]}")"                 # eval the result
+}
+
+cfg_parser ~/.omgsm/config
+cfg_section_Main
+
+key=`grep "$1" $GSMSESSION/keys.txt |cut -f4|tail -1`;
+if [ -z "$key" -o "$key" == 0000000000000000 ]; then
+	echo 0000000000000000
+	echo nohit $1 >> $GSMSESSION/hit.log
+else
+	echo $key
+	echo hit $1 $key >> $GSMSESSION/hit.log
+fi

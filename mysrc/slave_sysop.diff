@@ -1,0 +1,70 @@
+--- mysrc/l3.c	2012-10-10 03:00:19.000000000 +0200
++++ mysrc3/l3.c	2012-10-15 02:04:48.000000000 +0200
+@@ -42,7 +42,7 @@
+ };
+ 
+ /* FIXME - Should be moved to custom_ms */
+-static struct {
++struct {
+ 	int			has_si1;
+ 	int			ccch_mode;
+ 
+@@ -70,9 +70,9 @@
+ 
+ 	/* L1 release */
+ 	l1ctl_tx_dm_rel_req(ms);
+-	l1ctl_tx_fbsb_req(ms, ms->test_arfcn,
+-		L1CTL_FBSB_F_FB01SB, 100, 0,
+-		app_state.ccch_mode);
++//	l1ctl_tx_fbsb_req(ms, ms->test_arfcn,
++//		L1CTL_FBSB_F_FB01SB, 100, 0,
++//		app_state.ccch_mode);
+ 
+ 	/* Change state */
+ 	app_state.dch_state = DCH_WAIT_REL;
+@@ -112,6 +112,7 @@
+ 
+ 	sqlerr = sqlite3_close(conn);
+ 	printf("sql_close = %i\n", sqlerr);
++	exit(0);
+ 
+ 
+ }
+--- mysrc/sniff.c	2012-10-07 14:45:33.000000000 +0200
++++ mysrc3/sniff.c	2012-10-15 02:18:54.000000000 +0200
+@@ -64,6 +64,19 @@
+         DCH_WAIT_REL,
+ };
+ 
++struct app_state_t {
++        int                     has_si1;
++        int                     ccch_mode;
++
++        enum dch_state_t        dch_state;
++        uint8_t                 dch_nr;
++        int                     dch_badcnt;
++
++        FILE *                  fh;
++
++        struct gsm_sysinfo_freq cell_arfcns[1024];
++};
++extern struct app_state_t app_state;
+ 
+ // Komentare!
+ 
+@@ -111,6 +124,15 @@
+ 		ms = fr -> ms;
+ 		printf("Received signal S_L1CTL_FBSB_RESP\n");
+ 		layer3_app_reset();
++
++#define ARFCN 45
++#define CHANNR 0x20
++#define TSC 5
++		app_state.dch_state = DCH_WAIT_EST;
++		app_state.dch_nr = CHANNR;
++		app_state.dch_badcnt = 0;
++		rc = l1ctl_tx_dm_est_req_h0(ms, ARFCN, CHANNR, TSC, GSM48_CMODE_SIGN, 0);
++
+                 break;
+ 
+ 	case S_L1CTL_BURST_IND:

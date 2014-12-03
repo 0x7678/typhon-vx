@@ -1,0 +1,18 @@
+  * only one burst in parallel is supported
+  * only one GPU is supported
+  * there is no code indentation
+  * race conditions are avoided by sleep() :-P
+  * TCP interface is somehow magic
+  * block fetcher uses plain seeks instead of faster kernel-mode NCQ (~20x perf. in seeking)
+  * CL kernel is not bitsliced (~20x perf. in computation)
+  * CL blob compression is not supported (~5x perf. in computation)
+  * only single-user session is supported
+  * kicking fragments is not supported (~5x perf. in real-time cracking)
+  * CL streaming is not supported (~2x perf. in computation)
+  * .idx file format is inefficient (~2x perf. in loading)
+  * efficient protocol should be used (~10x bandwidth)
+  * index granularity is hardcoded at 4KiB, 1KiB should be better (investigate)
+
+STRANGES:
+111010110001001001001101011110011101001111000010100011100111000111010100011001111010000111110101100011111100111000|addd488ee6263c9d @ 8 (table:420)
+111001110010000100111001001000010011000010100110001111000000101110100100001001010001100100011110000101101001011100|354b6add48b89f0c @ 9

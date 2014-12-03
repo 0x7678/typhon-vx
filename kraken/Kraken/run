@@ -1,0 +1,12 @@
+#!/bin/sh
+
+export DISPLAY=:0
+ps axu | grep -q " [X]" || echo Nebezej ti Xka
+
+# hotfix, kraken sometimes keeps looping on last result.
+( while true; do echo crack 0010110010111100010101111011011001101101100000000001000010101111 ; sleep 10; done |nc localhost 6666 2>&1 >/dev/null ) &
+
+while true
+do
+	./kraken /root/gsm/indexes/ 6666 07 38
+done

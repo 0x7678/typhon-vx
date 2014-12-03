@@ -1,0 +1,12 @@
+diff --git a/src/host/osmocon/osmocon.c b/src/host/osmocon/osmocon.c
+index 2f7c0b2..7ca5879 100644
+--- a/src/host/osmocon/osmocon.c
++++ b/src/host/osmocon/osmocon.c
+@@ -1018,6 +1018,7 @@ static int handle_read_romload(void)
+ 			dnload.filename = dnload.previous_filename;
+ 			dnload.mode = dnload.previous_mode;
+ 			osmo_serial_set_baudrate(dnload.serial_fd.fd, MODEM_BAUDRATE);
++			serial_up_to_eleven();
+ 		} else if (!memcmp(buffer, romload_branch_nack,
+ 			   sizeof(romload_branch_nack))) {
+ 			printf("Received branch nack, aborting\n");

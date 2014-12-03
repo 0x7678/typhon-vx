@@ -1,0 +1,380 @@
+ulong a51(ulong start, int steps, char retstream) {
+  /* Magic. Don't touch. */
+  // a5/1 magic constants
+  unsigned int lfsr1 = start & 0x7ffff;
+  unsigned int lfsr2 = (start>>19) & 0x3fffff;
+  unsigned int lfsr3 = (start>>41) & 0x7fffff;
+
+//  int bits = 0;
+  ulong stream = 0;
+
+  for (int i=0; i<steps; i++) {
+    /* Majority count */
+    int count = ((lfsr1>>8)&0x01);
+    printf("count=%x\n",count);
+    count += ((lfsr2>>10)&0x01);
+    printf("%x count=%x\n",count);
+    count += ((lfsr3>>10)&0x01);
+    printf("count=%x\n",count);
+    count = count >> 1;
+
+    unsigned int bit = ((lfsr1>>18)^(lfsr2>>21)^(lfsr3>>22))&0x01;
+    stream = (stream<<1) | bit;
+    printf("count=%x\n",count);
+    /* Clock the different lfsr */
+    if (((lfsr1>>8)&0x01)==count) {
+      unsigned int val = (lfsr1&0x52000)*0x4a000;
+      val ^= lfsr1<<(31-17);
+      lfsr1 = 2*lfsr1 | (val>>31);
+      printf("clocking 1\n");
+    }
+    if (((lfsr2>>10)&0x01)==count) {
+      unsigned int val = (lfsr2&0x300000)*0xc00;
+      lfsr2 = 2*lfsr2 | (val>>31);
+      printf("clocking 2\n");
+    }
+    if (((lfsr3>>10)&0x01)==count) {
+      unsigned int val = (lfsr3&0x500080)*0x1000a00;
+      val ^= lfsr3<<(31-21);
+      lfsr3 = 2*lfsr3 | (val>>31);
+      printf("clocking 3\n");
+    }
+  }
+
+  if(retstream) {
+    return stream; //return keystream
+  } else {
+    // return a5/1 internal state
+    lfsr1 = lfsr1 & 0x7ffff;
+    lfsr2 = lfsr2 & 0x3fffff;
+    lfsr3 = lfsr3 & 0x7fffff;
+
+    ulong res = (ulong)lfsr1 | ((ulong)lfsr2<<19) | ((ulong)lfsr3<<41);
+
+    return res;
+  }
+}
+
+// reverse bites in ulong XXX optimize
+ulong rev(ulong r) {
+  ulong r1 = r;
+  ulong r2 = 0;
+  for (int j = 0; j < 64 ; j++ ) {
+    r2 = (r2<<1) | (r1 & 0x01);
+    r1 = r1 >> 1;
+  }
+  return r2;
+}
+
+
+
+
+
+ulong a51slice(ulong start, int steps, char retstream) {
+
+
+uint4 reg[16];
+
+    uint4 reg1;
+    uint4 reg2;
+        uint4 reg3;
+        uint4 reg4;
+        uint4 reg5;
+        uint4 reg6;
+        uint4 reg7;
+        uint4 reg8;
+    uint4 reg9;
+    uint4 reg10;
+        uint4 reg11;
+        uint4 reg12;
+        uint4 reg13;
+        uint4 reg14;
+        uint4 reg15;
+        uint4 reg16;
+
+        uint clock1;
+        uint clock2;
+        uint clock3;
+    uint iclk1;
+    uint iclk2;
+    uint iclk3;
+
+        uint cr1r2;
+        uint cr1r3;
+        uint cr2r3;
+
+    uint fb1;
+    uint fb2;
+    uint fb3;
+
+//start=rev(start);
+
+ reg1.x = start>>63 & 1;
+ reg1.y = start>>62 & 1;
+ reg1.z = start>>61 & 1;
+ reg1.w = start>>60 & 1;
+ reg2.x = start>>59 & 1;
+ reg2.y = start>>58 & 1;
+ reg2.z = start>>57 & 1;
+ reg2.w = start>>56 & 1;
+ reg3.x = start>>55 & 1;
+ reg3.y = start>>54 & 1;
+ reg3.z = start>>53 & 1;
+ reg3.w = start>>52 & 1;
+ reg4.x = start>>51 & 1;
+ reg4.y = start>>40 & 1;
+ reg4.z = start>>49 & 1;
+ reg4.w = start>>48 & 1;
+ reg5.x = start>>47 & 1;
+ reg5.y = start>>46 & 1;
+ reg5.z = start>>45 & 1;
+ reg5.w = start>>44 & 1;
+ reg6.x = start>>43 & 1;
+ reg6.y = start>>42 & 1;
+ reg6.z = start>>41 & 1;
+
+reg6.w = start>>40 & 1;
+reg7.x = start>>39 & 1;
+reg7.y = start>>38 & 1;
+reg7.z = start>>37 & 1;
+reg7.w = start>>36 & 1;
+reg8.x = start>>35 & 1;
+reg8.y = start>>34 & 1;
+reg8.z = start>>33 & 1;
+reg8.w = start>>32 & 1;
+reg9.x = start>>31 & 1;
+reg9.y = start>>30 & 1;
+reg9.z = start>>29 & 1;
+reg9.w = start>>28 & 1;
+reg10.x = start>>27 & 1;
+reg10.y = start>>26 & 1;
+reg10.z = start>>25 & 1;
+reg10.w = start>>24 & 1;
+reg11.x = start>>23 & 1;
+reg11.y = start>>22 & 1;
+reg11.z = start>>21 & 1;
+reg11.w = start>>20 & 1;
+reg12.x = start>>19 & 1;
+
+reg12.y = start>>18 & 1;
+reg12.z = start>>17 & 1;
+reg12.w = start>>16 & 1;
+reg13.x = start>>15 & 1;
+reg13.y = start>>14 & 1;
+reg13.z = start>>13 & 1;
+reg13.w = start>>12 & 1;
+reg14.x = start>>11 & 1;
+reg14.y = start>>10 & 1;
+reg14.z = start>>9 & 1;
+reg14.w = start>>8 & 1;
+reg15.x = start>>7 & 1;
+reg15.y = start>>6 & 1;
+reg15.z = start>>5 & 1;
+reg15.w = start>>4 & 1;
+reg16.x = start>>3 & 1;
+reg16.y = start>>2 & 1;
+reg16.z = start>>1 & 1;
+reg16.w = start>>0 & 1;
+
+
+
+cr1r2 = ~(reg14.w ^ reg9.z);
+cr1r3 = ~(reg14.w ^ reg4.x);
+cr2r3 = ~(reg9.z  ^ reg4.x);
+clock1 = cr1r2 | cr1r3;
+clock2 = cr1r2 | cr2r3;
+clock3 = cr1r3 | cr2r3;
+fb1 = (reg12.y ^ reg12.z ^ reg12.w ^ reg13.z) & clock1;
+fb2 = (reg6.w ^ reg7.x) & clock2;
+fb3 = (reg1.x ^ reg1.y ^ reg1.z ^ reg4.w) & clock3;
+iclk1 = ~clock1;
+iclk2 = ~clock2;
+iclk3 = ~clock3;
+reg1.x = (reg1.x & iclk3) | (reg1.y & clock3);
+reg1.y = (reg1.y & iclk3) | (reg1.z & clock3);
+reg1.z = (reg1.z & iclk3) | (reg1.w & clock3);
+reg1.w = (reg1.w & iclk3) | (reg2.x & clock3);
+reg2.x = (reg2.x & iclk3) | (reg2.y & clock3);
+reg2.y = (reg2.y & iclk3) | (reg2.z & clock3);
+reg2.z = (reg2.z & iclk3) | (reg2.w & clock3);
+reg2.w = (reg2.w & iclk3) | (reg3.x & clock3);
+reg3.x = (reg3.x & iclk3) | (reg3.y & clock3);
+reg3.y = (reg3.y & iclk3) | (reg3.z & clock3);
+reg3.z = (reg3.z & iclk3) | (reg3.w & clock3);
+reg3.w = (reg3.w & iclk3) | (reg4.x & clock3);
+reg4.x = (reg4.x & iclk3) | (reg4.y & clock3);
+reg4.y = (reg4.y & iclk3) | (reg4.z & clock3);
+reg4.z = (reg4.z & iclk3) | (reg4.w & clock3);
+reg4.w = (reg4.w & iclk3) | (reg5.x & clock3);
+reg5.x = (reg5.x & iclk3) | (reg5.y & clock3);
+reg5.y = (reg5.y & iclk3) | (reg5.z & clock3);
+reg5.z = (reg5.z & iclk3) | (reg5.w & clock3);
+reg5.w = (reg5.w & iclk3) | (reg6.x & clock3);
+reg6.x = (reg6.x & iclk3) | (reg6.y & clock3);
+reg6.y = (reg6.y & iclk3) | (reg6.z & clock3);
+reg6.z = (reg6.z & iclk3) | fb3;
+reg6.w = (reg6.w & iclk2) | (reg7.x & clock2);
+reg7.x = (reg7.x & iclk2) | (reg7.y & clock2);
+reg7.y = (reg7.y & iclk2) | (reg7.z & clock2);
+reg7.z = (reg7.z & iclk2) | (reg7.w & clock2);
+reg7.w = (reg7.w & iclk2) | (reg8.x & clock2);
+reg8.x = (reg8.x & iclk2) | (reg8.y & clock2);
+reg8.y = (reg8.y & iclk2) | (reg8.z & clock2);
+reg8.z = (reg8.z & iclk2) | (reg8.w & clock2);
+reg8.w = (reg8.w & iclk2) | (reg9.x & clock2);
+reg9.x = (reg9.x & iclk2) | (reg9.y & clock2);
+reg9.y = (reg9.y & iclk2) | (reg9.z & clock2);
+reg9.z = (reg9.z & iclk2) | (reg9.w & clock2);
+reg9.w = (reg9.w & iclk2) | (reg10.x & clock2);
+reg10.x = (reg10.x & iclk2) | (reg10.y & clock2);
+reg10.y = (reg10.y & iclk2) | (reg10.z & clock2);
+reg10.z = (reg10.z & iclk2) | (reg10.w & clock2);
+reg10.w = (reg10.w & iclk2) | (reg11.x & clock2);
+reg11.x = (reg11.x & iclk2) | (reg11.y & clock2);
+reg11.y = (reg11.y & iclk2) | (reg11.z & clock2);
+reg11.z = (reg11.z & iclk2) | (reg11.w & clock2);
+reg11.w = (reg11.w & iclk2) | (reg12.x & clock2);
+reg12.x = (reg12.x & iclk2) | fb2;
+reg12.y = (reg12.y & iclk1) | (reg12.z & clock1);
+reg12.z = (reg12.z & iclk1) | (reg12.w & clock1);
+reg12.w = (reg12.w & iclk1) | (reg13.x & clock1);
+reg13.x = (reg13.x & iclk1) | (reg13.y & clock1);
+reg13.y = (reg13.y & iclk1) | (reg13.z & clock1);
+reg13.z = (reg13.z & iclk1) | (reg13.w & clock1);
+reg13.w = (reg13.w & iclk1) | (reg14.x & clock1);
+reg14.x = (reg14.x & iclk1) | (reg14.y & clock1);
+reg14.y = (reg14.y & iclk1) | (reg14.z & clock1);
+reg14.z = (reg14.z & iclk1) | (reg14.w & clock1);
+reg14.w = (reg14.w & iclk1) | (reg15.x & clock1);
+reg15.x = (reg15.x & iclk1) | (reg15.y & clock1);
+reg15.y = (reg15.y & iclk1) | (reg15.z & clock1);
+reg15.z = (reg15.z & iclk1) | (reg15.w & clock1);
+reg15.w = (reg15.w & iclk1) | (reg16.x & clock1);
+reg16.x = (reg16.x & iclk1) | (reg16.y & clock1);
+reg16.y = (reg16.y & iclk1) | (reg16.z & clock1);
+reg16.z = (reg16.z & iclk1) | (reg16.w & clock1);
+reg16.w = (reg16.w & iclk1) | fb1;
+
+
+
+ulong ret = 0;
+
+ret |= (ulong)reg1.x <<63;
+ret |= (ulong)reg1.y <<62;
+ret |= (ulong)reg1.z <<61;
+ret |= (ulong)reg1.w <<60;
+ret |= (ulong)reg2.x <<59;
+ret |= (ulong)reg2.y <<58;
+ret |= (ulong)reg2.z <<57;
+ret |= (ulong)reg2.w <<56;
+ret |= (ulong)reg3.x <<55;
+ret |= (ulong)reg3.y <<54;
+ret |= (ulong)reg3.z <<53;
+ret |= (ulong)reg3.w <<52;
+ret |= (ulong)reg4.x <<51;
+ret |= (ulong)reg4.y <<50;
+ret |= (ulong)reg4.z <<49;
+ret |= (ulong)reg4.w <<48;
+ret |= (ulong)reg5.x <<47;
+ret |= (ulong)reg5.y <<46;
+ret |= (ulong)reg5.z <<45;
+ret |= (ulong)reg5.w <<44;
+ret |= (ulong)reg6.x <<43;
+ret |= (ulong)reg6.y <<42;
+ret |= (ulong)reg6.z <<41;
+ret |= (ulong)reg6.w <<40;
+ret |= (ulong)reg7.x <<39;
+ret |= (ulong)reg7.y <<38;
+ret |= (ulong)reg7.z <<37;
+ret |= (ulong)reg7.w <<36;
+ret |= (ulong)reg8.x <<35;
+ret |= (ulong)reg8.y <<34;
+ret |= (ulong)reg8.z <<33;
+ret |= (ulong)reg8.w <<32;
+ret |= reg9.x <<31;
+ret |= reg9.y <<30;
+ret |= reg9.z <<29;
+ret |= reg9.w <<28;
+ret |= reg10.x<<27;
+ret |= reg10.y<<26;
+ret |= reg10.z<<25;
+ret |= reg10.w<<24;
+ret |= reg11.x<<23;
+ret |= reg11.y<<22;
+ret |= reg11.z<<21;
+ret |= reg11.w<<20;
+ret |= reg12.x<<19;
+ret |= reg12.y<<18;
+ret |= reg12.z<<17;
+ret |= reg12.w<<16;
+ret |= reg13.x<<15;
+ret |= reg13.y<<14;
+ret |= reg13.z<<13;
+ret |= reg13.w<<12;
+ret |= reg14.x<<11;
+ret |= reg14.y<<10;
+ret |= reg14.z<<9;
+ret |= reg14.w<<8;
+ret |= reg15.x<<7;
+ret |= reg15.y<<6;
+ret |= reg15.z<<5;
+ret |= reg15.w<<4;
+ret |= reg16.x<<3;
+ret |= reg16.y<<2;
+ret |= reg16.z<<1;
+ret |= reg16.w<<0;
+
+return ret;
+
+} //a51slice
+
+
+
+
+
+
+
+kernel void krak(global uint *state, uint states) {
+  
+  // kernel index
+  private size_t my = get_global_id(0); 
+
+  // pointer to memory "owned" by this kernel instance
+  private size_t myptr = my * 32;
+  // (all needed data should fit into 12 ulongs)
+
+  // reduction function table (colors)
+  private ulong rft[8];
+
+  // current_color, maximal color, challenge we are looking for.
+  private ulong c_color, s_color, challenge;
+
+  // previous state
+  private ulong prevlink;
+
+  private uint i;
+
+  // copy data 
+  if (myptr < 1) {
+    // more kernels executed than needed
+
+
+private ulong reg;
+
+
+printf("A5/1 reference implementation:\n");
+reg=0x4567b878c3ecf060ULL;
+for(i = 0; i<2; i++) {
+  printf("%i: %16llx\n",i,reg);
+  reg=a51(reg,1,0);
+}
+
+printf("A5/1 sliced: \n");
+reg=0x4567b878c3ecf060ULL;
+for(i = 0; i<2; i++) {
+  printf("%i: %16llx\n",i,reg);
+  reg=a51slice(reg,1,0);
+}
+
+  }
+}
